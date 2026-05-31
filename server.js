@@ -89,7 +89,22 @@ app.post('/api/auth/login', async (req, res) => {
     res.status(500).json({ message: 'Internal server error during login.', error: error.message });
   }
 });
+// --- GET REFERRAL NETWORK ROUTE ---
+app.get('/api/network/:referralId', async (req, res) => {
+  try {
+    const { referralId } = req.params;
+    
+    // Find all users who typed THIS user's referral ID during registration
+    // We exclude passwords and profile pics to make the download super fast
+    const network = await User.find({ used_referral: referralId })
+                              .select('-password -profile_pic'); 
 
+    res.status(200).json({ members: network });
+  } catch (error) {
+    console.error('Network fetch error:', error);
+    res.status(500).json({ message: 'Error fetching network.' });
+  }
+});
 // 4. START THE SERVER & DATABASE
 const PORT = process.env.PORT || 5000;
 
