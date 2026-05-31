@@ -1,14 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors'); // Only declare this once!
+const cors = require('cors'); 
 const multer = require('multer');
 require('dotenv').config();
 
-const User = require('./models/User'); 
+const User = require('./models/User'); // Make sure this path matches your folder structure!
 
 const app = express();
 
-// Allow requests from all domains
+// Allow requests from your Vercel frontend
 app.use(cors({
     origin: '*', 
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -20,7 +20,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // 2. The Registration Route
 app.post('/api/auth/register', upload.fields([
-  { name: 'profileImage', maxCount: 1 } // Removed kycDocument since we don't need it
+  { name: 'profileImage', maxCount: 1 } 
 ]), async (req, res) => {
   try {
     // Check if the mobile number is already taken
@@ -44,7 +44,7 @@ app.post('/api/auth/register', upload.fields([
       ...req.body,
       referral_id: generatedReferralId,
       used_referral: req.body.referralId || '', // Capture who referred them
-      profile_pic: profilePicString, // Save the image!
+      profile_pic: profilePicString, // Save the image
       wallet_balance: 0 
     });
 
@@ -61,12 +61,39 @@ app.post('/api/auth/register', upload.fields([
   }
 });
 
-// ... Keep your existing login and mongoose connection logic below ...
+// 3. The Login Route
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { mobile, password } = req.body;
+    
+    // Find the user in the database
+    const user = await User.findOne({ mobile: mobile });
+    
+    if (!user) {
+      return res.status(400).json({ message: 'User not found. Please register first.' });
+    }
 
-// 4. START THE SERVER & DATABASE (This is what keeps it awake!)
+    // Check if password matches
+    if (user.password !== password) {
+      return res.status(401).json({ message: 'Incorrect password.' });
+    }
+
+    // Success! Send the user data back to React
+    res.status(200).json({
+      message: 'Login successful!',
+      user: user
+    });
+
+  } catch (error) {
+    console.error('Login processing error:', error);
+    res.status(500).json({ message: 'Internal server error during login.', error: error.message });
+  }
+});
+
+// 4. START THE SERVER & DATABASE
 const PORT = process.env.PORT || 5000;
 
-// Connect to your local database
+// Connect to MongoDB Atlas (uses the environment variable you set in Render)
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/fpp_database')
   .then(() => {
     console.log("MongoDB Connected Successfully!");
@@ -77,6 +104,3 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/fpp_databas
     });
   })
   .catch(err => console.log("Database connection failure:", err));
-  
-  
-  
