@@ -14,6 +14,9 @@ const UserSchema = new mongoose.Schema({
   address: { type: String },
   pincode: { type: String },
   
+  // ---> NEW: Must be exactly this name so the image saves!
+  profile_pic: { type: String, default: '' }, 
+  
   // Area
   country: { type: String, default: 'India' },
   state: { type: String },
@@ -27,7 +30,10 @@ const UserSchema = new mongoose.Schema({
   
   // System Fields
   referral_id: { type: String, unique: true },
-  referred_by: { type: String, default: null },
+  
+  // ---> CHANGED: Swapped 'referred_by' to 'used_referral' to perfectly match your server.js
+  used_referral: { type: String, default: '' }, 
+  
   role: { type: String, default: 'Supporter' },
   wallet_balance: { type: Number, default: 0 },
 }, { timestamps: true });
